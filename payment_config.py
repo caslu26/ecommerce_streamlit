@@ -97,27 +97,66 @@ class PaymentConfig:
         """Retorna configuração do cartão"""
         return self.config.get("cartao", {})
     
-    def update_pix_config(self, chave_pix: str, nome_recebedor: str, cidade: str) -> bool:
+    def update_pix_config(self, chave_pix: str, nome_recebedor: str, cidade: str, descricao: str = "") -> bool:
         """Atualiza configuração do PIX"""
         self.config["pix"]["chave_pix"] = chave_pix
         self.config["pix"]["nome_recebedor"] = nome_recebedor
         self.config["pix"]["cidade"] = cidade
+        if descricao:
+            self.config["pix"]["descricao"] = descricao
         return self.save_config()
     
-    def update_boleto_config(self, banco: str, agencia: str, conta: str, cedente: str, cnpj: str) -> bool:
+    def update_boleto_config(self, banco: str, agencia: str, conta: str, cedente: str, cnpj: str, dias_vencimento: int = 3) -> bool:
         """Atualiza configuração do boleto"""
         self.config["boleto"]["banco"] = banco
         self.config["boleto"]["agencia"] = agencia
         self.config["boleto"]["conta"] = conta
         self.config["boleto"]["cedente"] = cedente
         self.config["boleto"]["cnpj"] = cnpj
+        self.config["boleto"]["dias_vencimento"] = dias_vencimento
         return self.save_config()
     
-    def update_cartao_config(self, merchant_id: str, api_key: str, taxa_porcentagem: float) -> bool:
+    def update_cartao_config(self, merchant_id: str, taxa_porcentagem: float, taxa_fixa: float, gateway: str = "Simulado") -> bool:
         """Atualiza configuração do cartão"""
         self.config["cartao"]["merchant_id"] = merchant_id
-        self.config["cartao"]["api_key"] = api_key
         self.config["cartao"]["taxa_porcentagem"] = taxa_porcentagem
+        self.config["cartao"]["taxa_fixa"] = taxa_fixa
+        self.config["cartao"]["gateway"] = gateway
+        return self.save_config()
+    
+    def clear_pix_config(self) -> bool:
+        """Limpa configuração do PIX"""
+        self.config["pix"] = {
+            "enabled": False,
+            "chave_pix": "",
+            "nome_recebedor": "",
+            "cidade": "",
+            "descricao": ""
+        }
+        return self.save_config()
+    
+    def clear_boleto_config(self) -> bool:
+        """Limpa configuração do Boleto"""
+        self.config["boleto"] = {
+            "enabled": False,
+            "banco": "",
+            "agencia": "",
+            "conta": "",
+            "cedente": "",
+            "cnpj": "",
+            "dias_vencimento": 3
+        }
+        return self.save_config()
+    
+    def clear_cartao_config(self) -> bool:
+        """Limpa configuração do Cartão"""
+        self.config["cartao"] = {
+            "enabled": False,
+            "merchant_id": "",
+            "taxa_porcentagem": 3.5,
+            "taxa_fixa": 0.39,
+            "gateway": "Simulado"
+        }
         return self.save_config()
 
 
@@ -416,12 +455,99 @@ def render_payment_config_page():
         
         # Mostrar configuração atual
         if pix_config.get("chave_pix"):
-            st.markdown("### 📋 Configuração Atual")
-            st.info(f"""
-            **🔑 Chave PIX:** `{pix_config['chave_pix']}`  
-            **👤 Recebedor:** {pix_config['nome_recebedor']}  
-            **🏙️ Cidade:** {pix_config['cidade']}
-            """)
+            st.markdown("### 📋 Configuração PIX Atual")
+            
+            col1, col2 = st.columns([3, 1])
+            
+            with col1:
+                st.info(f"""
+                **🔑 Chave PIX:** `{pix_config['chave_pix']}`  
+                **👤 Recebedor:** {pix_config['nome_recebedor']}  
+                **🏙️ Cidade:** {pix_config['cidade']}
+                """)
+            
+            with col2:
+                st.markdown("**⚙️ Ações:**")
+                
+                if st.button("🔧 Editar PIX", key="edit_pix", use_container_width=True, type="primary"):
+                    st.session_state.edit_pix_config = True
+                    st.rerun()
+                
+                if st.button("🗑️ Excluir PIX", key="delete_pix", use_container_width=True, type="secondary"):
+                    st.session_state.delete_pix_config = True
+                    st.rerun()
+        
+        # Modal de confirmação de exclusão PIX
+        if st.session_state.get('delete_pix_config', False):
+            st.markdown("---")
+            st.markdown("### ⚠️ Confirmar Exclusão PIX")
+            st.warning("**Você tem certeza que deseja excluir a configuração PIX?**")
+            st.info("💡 **Importante:** Isso desabilitará completamente os pagamentos via PIX.")
+            
+            col1, col2, col3 = st.columns([1, 1, 1])
+            
+            with col1:
+                if st.button("✅ Sim, Excluir PIX", key="confirm_delete_pix", type="primary", use_container_width=True):
+                    if config.clear_pix_config():
+                        st.success("✅ Configuração PIX excluída com sucesso!")
+                        st.session_state.pop('delete_pix_config', None)
+                        st.rerun()
+                    else:
+                        st.error("❌ Erro ao excluir configuração PIX!")
+            
+            with col2:
+                if st.button("❌ Cancelar", key="cancel_delete_pix", use_container_width=True):
+                    st.session_state.pop('delete_pix_config', None)
+                    st.rerun()
+        
+        # Formulário de edição PIX
+        if st.session_state.get('edit_pix_config', False):
+            st.markdown("---")
+            st.markdown("### ✏️ Editando Configuração PIX")
+            
+            if st.button("❌ Cancelar Edição PIX", key="cancel_edit_pix"):
+                st.session_state.pop('edit_pix_config', None)
+                st.rerun()
+            
+            with st.form("edit_pix_config_form"):
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    new_chave_pix = st.text_input(
+                        "🔑 Nova Chave PIX",
+                        value=pix_config.get("chave_pix", ""),
+                        placeholder="CPF, CNPJ, email ou chave aleatória"
+                    )
+                    
+                    new_nome_recebedor = st.text_input(
+                        "👤 Novo Nome do Recebedor",
+                        value=pix_config.get("nome_recebedor", ""),
+                        placeholder="Nome da empresa ou pessoa"
+                    )
+                
+                with col2:
+                    new_cidade = st.text_input(
+                        "🏙️ Nova Cidade",
+                        value=pix_config.get("cidade", ""),
+                        placeholder="Cidade do recebedor"
+                    )
+                    
+                    new_descricao = st.text_input(
+                        "📝 Nova Descrição",
+                        value=pix_config.get("descricao", ""),
+                        placeholder="Descrição do pagamento"
+                    )
+                
+                if st.form_submit_button("💾 Salvar Alterações PIX", use_container_width=True):
+                    if new_chave_pix and new_nome_recebedor and new_cidade:
+                        if config.update_pix_config(new_chave_pix, new_nome_recebedor, new_cidade, new_descricao):
+                            st.success("✅ Configuração PIX atualizada com sucesso!")
+                            st.session_state.pop('edit_pix_config', None)
+                            st.rerun()
+                        else:
+                            st.error("❌ Erro ao atualizar configuração PIX!")
+                    else:
+                        st.error("❌ Preencha todos os campos obrigatórios!")
     
     with tab2:
         st.markdown("### 🏦 Configuração Boleto Bancário")
@@ -489,14 +615,122 @@ def render_payment_config_page():
         
         # Mostrar configuração atual
         if boleto_config.get("banco"):
-            st.markdown("### 📋 Configuração Atual")
-            st.info(f"""
-            **🏦 Banco:** {boleto_config['banco']}  
-            **🏢 Agência:** {boleto_config['agencia']}  
-            **💳 Conta:** {boleto_config['conta']}  
-            **🏢 Cedente:** {boleto_config['cedente']}  
-            **📄 CNPJ:** {boleto_config['cnpj']}
-            """)
+            st.markdown("### 📋 Configuração Boleto Atual")
+            
+            col1, col2 = st.columns([3, 1])
+            
+            with col1:
+                st.info(f"""
+                **🏦 Banco:** {boleto_config['banco']}  
+                **🏢 Agência:** {boleto_config['agencia']}  
+                **💳 Conta:** {boleto_config['conta']}  
+                **🏢 Cedente:** {boleto_config['cedente']}  
+                **📄 CNPJ:** {boleto_config['cnpj']}
+                """)
+            
+            with col2:
+                st.markdown("**⚙️ Ações:**")
+                
+                if st.button("🔧 Editar Boleto", key="edit_boleto", use_container_width=True, type="primary"):
+                    st.session_state.edit_boleto_config = True
+                    st.rerun()
+                
+                if st.button("🗑️ Excluir Boleto", key="delete_boleto", use_container_width=True, type="secondary"):
+                    st.session_state.delete_boleto_config = True
+                    st.rerun()
+        
+        # Modal de confirmação de exclusão Boleto
+        if st.session_state.get('delete_boleto_config', False):
+            st.markdown("---")
+            st.markdown("### ⚠️ Confirmar Exclusão Boleto")
+            st.warning("**Você tem certeza que deseja excluir a configuração de Boleto?**")
+            st.info("💡 **Importante:** Isso desabilitará completamente os pagamentos via Boleto.")
+            
+            col1, col2, col3 = st.columns([1, 1, 1])
+            
+            with col1:
+                if st.button("✅ Sim, Excluir Boleto", key="confirm_delete_boleto", type="primary", use_container_width=True):
+                    if config.clear_boleto_config():
+                        st.success("✅ Configuração Boleto excluída com sucesso!")
+                        st.session_state.pop('delete_boleto_config', None)
+                        st.rerun()
+                    else:
+                        st.error("❌ Erro ao excluir configuração Boleto!")
+            
+            with col2:
+                if st.button("❌ Cancelar", key="cancel_delete_boleto", use_container_width=True):
+                    st.session_state.pop('delete_boleto_config', None)
+                    st.rerun()
+        
+        # Formulário de edição Boleto
+        if st.session_state.get('edit_boleto_config', False):
+            st.markdown("---")
+            st.markdown("### ✏️ Editando Configuração Boleto")
+            
+            if st.button("❌ Cancelar Edição Boleto", key="cancel_edit_boleto"):
+                st.session_state.pop('edit_boleto_config', None)
+                st.rerun()
+            
+            with st.form("edit_boleto_config_form"):
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    new_banco = st.selectbox(
+                        "🏦 Novo Banco",
+                        options=["341", "001", "104", "237", "033", "756"],
+                        format_func=lambda x: {
+                            "341": "Itaú (341)",
+                            "001": "Banco do Brasil (001)",
+                            "104": "Caixa Econômica (104)",
+                            "237": "Bradesco (237)",
+                            "033": "Santander (033)",
+                            "756": "Sicoob (756)"
+                        }.get(x, x),
+                        index=["341", "001", "104", "237", "033", "756"].index(boleto_config.get("banco", "341"))
+                    )
+                    
+                    new_agencia = st.text_input(
+                        "🏢 Nova Agência",
+                        value=boleto_config.get("agencia", ""),
+                        placeholder="1234"
+                    )
+                    
+                    new_conta = st.text_input(
+                        "💳 Nova Conta",
+                        value=boleto_config.get("conta", ""),
+                        placeholder="12345-6"
+                    )
+                
+                with col2:
+                    new_cedente = st.text_input(
+                        "🏢 Novo Nome do Cedente",
+                        value=boleto_config.get("cedente", ""),
+                        placeholder="Nome da empresa"
+                    )
+                    
+                    new_cnpj = st.text_input(
+                        "📄 Novo CNPJ",
+                        value=boleto_config.get("cnpj", ""),
+                        placeholder="12.345.678/0001-90"
+                    )
+                    
+                    new_dias_vencimento = st.number_input(
+                        "📅 Novos Dias para Vencimento",
+                        value=boleto_config.get("dias_vencimento", 3),
+                        min_value=1,
+                        max_value=30
+                    )
+                
+                if st.form_submit_button("💾 Salvar Alterações Boleto", use_container_width=True):
+                    if new_banco and new_agencia and new_conta and new_cedente and new_cnpj:
+                        if config.update_boleto_config(new_banco, new_agencia, new_conta, new_cedente, new_cnpj, new_dias_vencimento):
+                            st.success("✅ Configuração Boleto atualizada com sucesso!")
+                            st.session_state.pop('edit_boleto_config', None)
+                            st.rerun()
+                        else:
+                            st.error("❌ Erro ao atualizar configuração Boleto!")
+                    else:
+                        st.error("❌ Preencha todos os campos obrigatórios!")
     
     with tab3:
         st.markdown("### 💳 Configuração Gateway de Cartão")
@@ -549,12 +783,104 @@ def render_payment_config_page():
         
         # Mostrar configuração atual
         if cartao_config.get("merchant_id"):
-            st.markdown("### 📋 Configuração Atual")
-            st.info(f"""
-            **🆔 Merchant ID:** {cartao_config['merchant_id']}  
-            **📊 Taxa:** {cartao_config['taxa_porcentagem']}% + R$ {cartao_config['taxa_fixa']}  
-            **🔧 Gateway:** {cartao_config.get('gateway', 'Simulado')}
-            """)
+            st.markdown("### 📋 Configuração Cartão Atual")
+            
+            col1, col2 = st.columns([3, 1])
+            
+            with col1:
+                st.info(f"""
+                **🆔 Merchant ID:** {cartao_config['merchant_id']}  
+                **📊 Taxa:** {cartao_config['taxa_porcentagem']}% + R$ {cartao_config['taxa_fixa']}  
+                **🔧 Gateway:** {cartao_config.get('gateway', 'Simulado')}
+                """)
+            
+            with col2:
+                st.markdown("**⚙️ Ações:**")
+                
+                if st.button("🔧 Editar Cartão", key="edit_cartao", use_container_width=True, type="primary"):
+                    st.session_state.edit_cartao_config = True
+                    st.rerun()
+                
+                if st.button("🗑️ Excluir Cartão", key="delete_cartao", use_container_width=True, type="secondary"):
+                    st.session_state.delete_cartao_config = True
+                    st.rerun()
+        
+        # Modal de confirmação de exclusão Cartão
+        if st.session_state.get('delete_cartao_config', False):
+            st.markdown("---")
+            st.markdown("### ⚠️ Confirmar Exclusão Cartão")
+            st.warning("**Você tem certeza que deseja excluir a configuração de Cartão?**")
+            st.info("💡 **Importante:** Isso desabilitará completamente os pagamentos via Cartão de Crédito e Débito.")
+            
+            col1, col2, col3 = st.columns([1, 1, 1])
+            
+            with col1:
+                if st.button("✅ Sim, Excluir Cartão", key="confirm_delete_cartao", type="primary", use_container_width=True):
+                    if config.clear_cartao_config():
+                        st.success("✅ Configuração Cartão excluída com sucesso!")
+                        st.session_state.pop('delete_cartao_config', None)
+                        st.rerun()
+                    else:
+                        st.error("❌ Erro ao excluir configuração Cartão!")
+            
+            with col2:
+                if st.button("❌ Cancelar", key="cancel_delete_cartao", use_container_width=True):
+                    st.session_state.pop('delete_cartao_config', None)
+                    st.rerun()
+        
+        # Formulário de edição Cartão
+        if st.session_state.get('edit_cartao_config', False):
+            st.markdown("---")
+            st.markdown("### ✏️ Editando Configuração Cartão")
+            
+            if st.button("❌ Cancelar Edição Cartão", key="cancel_edit_cartao"):
+                st.session_state.pop('edit_cartao_config', None)
+                st.rerun()
+            
+            with st.form("edit_cartao_config_form"):
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    new_merchant_id = st.text_input(
+                        "🆔 Novo Merchant ID",
+                        value=cartao_config.get("merchant_id", ""),
+                        placeholder="MERCHANT123456"
+                    )
+                    
+                    new_taxa_porcentagem = st.number_input(
+                        "📊 Nova Taxa (%)",
+                        value=cartao_config.get("taxa_porcentagem", 3.5),
+                        min_value=0.0,
+                        max_value=10.0,
+                        step=0.1,
+                        format="%.2f"
+                    )
+                
+                with col2:
+                    new_taxa_fixa = st.number_input(
+                        "💰 Nova Taxa Fixa (R$)",
+                        value=cartao_config.get("taxa_fixa", 0.39),
+                        min_value=0.0,
+                        step=0.01,
+                        format="%.2f"
+                    )
+                    
+                    new_gateway = st.selectbox(
+                        "🔧 Novo Gateway",
+                        options=["Simulado", "Stripe", "PagSeguro", "Mercado Pago"],
+                        index=["Simulado", "Stripe", "PagSeguro", "Mercado Pago"].index(cartao_config.get("gateway", "Simulado"))
+                    )
+                
+                if st.form_submit_button("💾 Salvar Alterações Cartão", use_container_width=True):
+                    if new_merchant_id:
+                        if config.update_cartao_config(new_merchant_id, new_taxa_porcentagem, new_taxa_fixa, new_gateway):
+                            st.success("✅ Configuração Cartão atualizada com sucesso!")
+                            st.session_state.pop('edit_cartao_config', None)
+                            st.rerun()
+                        else:
+                            st.error("❌ Erro ao atualizar configuração Cartão!")
+                    else:
+                        st.error("❌ Preencha o Merchant ID!")
     
     with tab4:
         st.markdown("### 📧 Configuração de Notificações")
