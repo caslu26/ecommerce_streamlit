@@ -259,9 +259,9 @@ def login_page():
         
         with col2:
         st.markdown("""
-            <div style='background: linear-gradient(145deg, #ffffff, #f8fafc); 
-                        padding: 2rem; border-radius: 16px; margin: 1rem 0; 
-                        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);'>
+                <div style='background: linear-gradient(145deg, #ffffff, #f8fafc); 
+                            padding: 2rem; border-radius: 16px; margin: 1rem 0; 
+                            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);'>
         """, unsafe_allow_html=True)
         
         with st.form("login_form", clear_on_submit=False):
@@ -288,7 +288,7 @@ def login_page():
                 login_btn = st.form_submit_button("🔓 Entrar na Conta", use_container_width=True, type="primary")
             
             if login_btn:
-                    if username and password:
+                if username and password:
                 user = authenticate_user(username, password)
                 if user:
                     st.session_state.user_id = user['id']
@@ -307,12 +307,12 @@ def login_page():
                     else:
                         st.session_state.page = "home"
                     
-                            st.success(f"✅ Bem-vindo de volta, {user['first_name']}!")
+                        st.success(f"✅ Bem-vindo de volta, {user['first_name']}!")
                     st.rerun()
                 else:
-                            st.error("❌ Credenciais inválidas! Verifique seu usuário e senha.")
-                    else:
-                        st.error("❌ Preencha todos os campos!")
+                        st.error("❌ Credenciais inválidas! Verifique seu usuário e senha.")
+                else:
+                    st.error("❌ Preencha todos os campos!")
     
             st.markdown("</div>", unsafe_allow_html=True)
             
