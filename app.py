@@ -317,10 +317,10 @@ def login_page():
             st.markdown("</div>", unsafe_allow_html=True)
             
             # Botão "Esqueci minha senha" fora do formulário
-        st.markdown("""
-            <div style='text-align: center; margin: 1rem 0;'>
-        """, unsafe_allow_html=True)
-        
+            st.markdown("""
+                <div style='text-align: center; margin: 1rem 0;'>
+            """, unsafe_allow_html=True)
+            
             if st.button("🔑 Esqueci minha senha", help="Funcionalidade em desenvolvimento"):
                 st.info("📧 Funcionalidade de recuperação de senha será implementada em breve!")
             
