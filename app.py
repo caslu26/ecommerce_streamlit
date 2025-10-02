@@ -258,13 +258,13 @@ def login_page():
         col1, col2, col3 = st.columns([1, 2, 1])
         
         with col2:
-        st.markdown("""
+            st.markdown("""
                 <div style='background: linear-gradient(145deg, #ffffff, #f8fafc); 
                             padding: 2rem; border-radius: 16px; margin: 1rem 0; 
                             box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);'>
-        """, unsafe_allow_html=True)
-        
-        with st.form("login_form", clear_on_submit=False):
+            """, unsafe_allow_html=True)
+            
+            with st.form("login_form", clear_on_submit=False):
                 st.markdown("### 🔐 Dados de Acesso")
                 
                 username = st.text_input(
@@ -289,27 +289,27 @@ def login_page():
             
             if login_btn:
                 if username and password:
-                user = authenticate_user(username, password)
-                if user:
-                    st.session_state.user_id = user['id']
-                    st.session_state.username = user['username']
-                    st.session_state.role = user['role']
-                    st.session_state.first_name = user['first_name']
-                    
-                    # Se vem do checkout, transferir carrinho de sessão
-                    if st.session_state.get('from_checkout', False):
-                        if 'session_cart' in st.session_state:
-                            for item in st.session_state.session_cart:
-                                add_to_cart(user['id'], item['product_id'], item['quantity'])
-                            del st.session_state.session_cart
-                        st.session_state.page = "checkout"
-                        st.session_state.pop('from_checkout', None)
-                    else:
-                        st.session_state.page = "home"
-                    
+                    user = authenticate_user(username, password)
+                    if user:
+                        st.session_state.user_id = user['id']
+                        st.session_state.username = user['username']
+                        st.session_state.role = user['role']
+                        st.session_state.first_name = user['first_name']
+                        
+                        # Se vem do checkout, transferir carrinho de sessão
+                        if st.session_state.get('from_checkout', False):
+                            if 'session_cart' in st.session_state:
+                                for item in st.session_state.session_cart:
+                                    add_to_cart(user['id'], item['product_id'], item['quantity'])
+                                del st.session_state.session_cart
+                            st.session_state.page = "checkout"
+                            st.session_state.pop('from_checkout', None)
+                        else:
+                            st.session_state.page = "home"
+                        
                         st.success(f"✅ Bem-vindo de volta, {user['first_name']}!")
-                    st.rerun()
-                else:
+                        st.rerun()
+                    else:
                         st.error("❌ Credenciais inválidas! Verifique seu usuário e senha.")
                 else:
                     st.error("❌ Preencha todos os campos!")
