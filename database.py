@@ -360,6 +360,22 @@ def update_product_stock(product_id: int, quantity: int, decrease: bool = False)
         conn.close()
 
 
+def update_product_stock_direct(product_id: int, new_stock: int) -> bool:
+    """Atualiza o estoque diretamente para um valor específico"""
+    conn = get_conn()
+    cur = conn.cursor()
+    
+    try:
+        cur.execute("UPDATE products SET stock = ? WHERE id = ?", (new_stock, product_id))
+        conn.commit()
+        return cur.rowcount > 0
+    except Exception as e:
+        print(f"Erro ao atualizar estoque: {e}")
+        return False
+    finally:
+        conn.close()
+
+
 def delete_product(product_id: int) -> bool:
     """Exclui um produto (soft delete - marca como inativo)"""
     conn = get_conn()

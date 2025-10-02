@@ -1256,9 +1256,39 @@ def admin_dashboard():
                         st.warning("⚠️ Produto sem imagem")
                 
                 with col2:
-                    st.number_input("Estoque atual:", value=product['stock'], min_value=0, 
-                                   key=f"stock_display_{product['id']}")
-                    st.info("💡 Use o botão '🔧 Editar Produto' abaixo para editar este produto")
+                    st.markdown("**⚙️ Ações:**")
+                    
+                    # Botões de ação - mais visíveis
+                    st.markdown("---")
+                    
+                    # Botão Editar
+                    if st.button("🔧 Editar Produto", key=f"edit_tab1_{product['id']}", use_container_width=True, type="primary"):
+                        st.session_state.edit_product_id = product['id']
+                        st.rerun()
+                    
+                    # Botão Excluir
+                    if st.button("🗑️ Excluir Produto", key=f"delete_tab1_{product['id']}", use_container_width=True, type="secondary"):
+                        st.session_state.delete_product_id = product['id']
+                        st.session_state.show_delete_confirmation = True
+                        st.rerun()
+                    
+                    st.markdown("---")
+                    
+                    # Campo para ajustar estoque rapidamente
+                    st.markdown("**📦 Ajuste Rápido de Estoque:**")
+                    new_stock = st.number_input(
+                        "Estoque atual:", 
+                        value=product['stock'], 
+                        min_value=0, 
+                        key=f"stock_tab1_{product['id']}"
+                    )
+                    
+                    if st.button("💾 Salvar Estoque", key=f"save_stock_tab1_{product['id']}", use_container_width=True):
+                        if update_product_stock_direct(product['id'], new_stock):
+                            st.success("✅ Estoque atualizado!")
+                            st.rerun()
+                        else:
+                            st.error("❌ Erro ao atualizar estoque!")
         
         # Criar novo produto
         st.markdown("### ➕ Cadastrar Novo Produto")
