@@ -369,7 +369,7 @@ class PaymentUI:
             elif st.session_state.payment_result.get('payment_method') == 'Boleto Bancário':
                 return self._display_boleto_payment(st.session_state.payment_result)
         
-        return {"status": "pending"}
+        return {"status": "waiting"}
     
     def _render_credit_card_form(self, order_data: Dict) -> Dict:
         """Renderiza formulário de cartão de crédito"""
@@ -464,7 +464,7 @@ class PaymentUI:
                         st.error(f"❌ {result['error']}")
                         return result
         
-        return {"status": "pending"}
+        return {"status": "waiting"}
     
     def _render_debit_card_form(self, order_data: Dict) -> Dict:
         """Renderiza formulário de cartão de débito"""
@@ -563,7 +563,7 @@ class PaymentUI:
                         st.error(f"❌ {result['error']}")
                         return result
         
-        return {"status": "pending"}
+        return {"status": "waiting"}
     
     def _render_boleto_form(self, order_data: Dict) -> Dict:
         """Renderiza formulário de boleto"""
@@ -601,7 +601,7 @@ class PaymentUI:
             elif st.session_state.payment_result.get('payment_method') == 'Boleto Bancário':
                 return self._display_boleto_payment(st.session_state.payment_result)
         
-        return {"status": "pending"}
+        return {"status": "waiting"}
     
     def _display_pix_payment(self, payment_result: Dict) -> Dict:
         """Exibe informações do PIX"""

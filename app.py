@@ -914,7 +914,10 @@ def checkout_page():
                 st.session_state.payment_timestamp = time.time()
             
             # Processar resultado do pagamento
-            if payment_result.get('status') == 'approved':
+            if payment_result.get('status') == 'waiting':
+                # Aguardando ação do usuário
+                st.info("💡 Selecione uma forma de pagamento e preencha os dados para continuar.")
+            elif payment_result.get('status') == 'approved':
                 # Criar pedido no banco de dados
                 order_id = create_order(
                     st.session_state.user_id,
