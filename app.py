@@ -1314,6 +1314,120 @@ def admin_dashboard():
                     st.success("✅ Novo produto cadastrado com sucesso!")
                 else:
                     st.error("❌ Preencha todos os campos obrigatórios!")
+        
+        # Modal de confirmação de exclusão (DENTRO da aba Produtos)
+        if st.session_state.get('show_delete_confirmation', False):
+            delete_product_id = st.session_state.get('delete_product_id')
+            product_to_delete = get_product_by_id(delete_product_id)
+            
+            if product_to_delete:
+                st.markdown("---")
+                st.markdown("### ⚠️ Confirmar Exclusão")
+                st.warning(f"**Você tem certeza que deseja excluir o produto '{product_to_delete['name']}'?**")
+                st.info("💡 **Importante:** Se houver pedidos ativos com este produto, ele será apenas desativado. Caso contrário, será excluído permanentemente.")
+                
+                col1, col2, col3 = st.columns([1, 1, 1])
+                
+                with col1:
+                    if st.button("✅ Sim, Excluir", key="confirm_delete_tab1", type="primary", use_container_width=True):
+                        if delete_product(delete_product_id):
+                            st.success("✅ Produto excluído com sucesso!")
+                            st.session_state.pop('delete_product_id', None)
+                            st.session_state.pop('show_delete_confirmation', None)
+                            st.rerun()
+                        else:
+                            st.error("❌ Erro ao excluir produto!")
+                
+                with col2:
+                    if st.button("❌ Cancelar", key="cancel_delete_tab1", use_container_width=True):
+                        st.session_state.pop('delete_product_id', None)
+                        st.session_state.pop('show_delete_confirmation', None)
+                        st.rerun()
+                
+                st.markdown("---")
+            else:
+                st.error("❌ Produto não encontrado!")
+                st.session_state.pop('delete_product_id', None)
+                st.session_state.pop('show_delete_confirmation', None)
+                st.rerun()
+        
+        # Lógica de edição de produto (DENTRO da aba Produtos)
+        if 'edit_product_id' in st.session_state and st.session_state.edit_product_id:
+            edit_product_id = st.session_state.edit_product_id
+            product_to_edit = get_product_by_id(edit_product_id)
+            
+            if product_to_edit:
+                st.markdown("---")
+                st.markdown("#### ✏️ Editando Produto")
+                
+                # Botão para cancelar edição
+                if st.button("❌ Cancelar Edição", key="cancel_edit_tab1"):
+                    st.session_state.pop('edit_product_id', None)
+                    st.rerun()
+                
+                col1, col2 = st.columns([1, 1])
+                
+                with col1:
+                    # Exibir imagem atual
+                    image_url = product_to_edit['image_url'] if product_to_edit['image_url'] else None
+                    if image_url:
+                        st.image(image_url, width=200, caption="Imagem atual")
+                    else:
+                        st.info("📷 Produto sem imagem")
+                
+                with col2:
+                    # Formulário de edição
+                    with st.form("edit_product_tab1"):
+                        new_name = st.text_input("Nome", value=product_to_edit['name'])
+                        new_description = st.text_area("Descrição", value=product_to_edit['description'])
+                        new_price = st.number_input("Preço (R$)", value=float(product_to_edit['price']), min_value=0.0, step=0.01)
+                        new_stock = st.number_input("Estoque", value=product_to_edit['stock'], min_value=0, step=1)
+                        
+                        categories = get_all_categories()
+                        current_category_id = product_to_edit['category_id']
+                        category_index = next((i for i, c in enumerate(categories) if c['id'] == current_category_id), 0)
+                        new_category_id = st.selectbox("Categoria", 
+                                                     options=[c['id'] for c in categories],
+                                                     index=category_index,
+                                                     format_func=lambda x: next(c['name'] for c in categories if c['id'] == x))
+                        
+                        new_image_url = st.text_input("URL da imagem", value=image_url or "", placeholder="https://example.com/image.jpg")
+                        
+                        update_btn = st.form_submit_button("💾 Salvar Alterações", use_container_width=True)
+                        
+                        if update_btn:
+                            try:
+                                # Verificar se houve mudanças
+                                changes = {}
+                                if new_name != product_to_edit['name']:
+                                    changes['name'] = new_name
+                                if new_description != product_to_edit['description']:
+                                    changes['description'] = new_description
+                                if new_price != float(product_to_edit['price']):
+                                    changes['price'] = new_price
+                                if new_stock != product_to_edit['stock']:
+                                    changes['stock'] = new_stock
+                                if new_category_id != product_to_edit['category_id']:
+                                    changes['category_id'] = new_category_id
+                                if new_image_url != (product_to_edit['image_url'] or ""):
+                                    changes['image_url'] = new_image_url
+                                
+                                if changes:
+                                    if update_product(product_to_edit['id'], **changes):
+                                        st.success("✅ Produto atualizado com sucesso!")
+                                        st.session_state.pop('edit_product_id', None)
+                                        st.rerun()
+                                    else:
+                                        st.error("❌ Erro ao atualizar produto!")
+                                else:
+                                    st.info("ℹ️ Nenhuma alteração detectada.")
+                                    
+                            except Exception as e:
+                                st.error(f"❌ Erro ao processar atualização: {str(e)}")
+            else:
+                st.error("❌ Produto não encontrado!")
+                st.session_state.pop('edit_product_id', None)
+                st.rerun()
     
     with tab2:
         st.markdown("### 📋 Gestão de Pedidos")
