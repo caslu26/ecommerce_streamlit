@@ -1721,6 +1721,42 @@ def admin_dashboard():
                 st.session_state.pop('edit_product_id', None)
                 st.rerun()
         
+        # Modal de confirmação de exclusão
+        if st.session_state.get('show_delete_confirmation', False):
+            delete_product_id = st.session_state.get('delete_product_id')
+            product_to_delete = get_product_by_id(delete_product_id)
+            
+            if product_to_delete:
+                st.markdown("---")
+                st.markdown("### ⚠️ Confirmar Exclusão")
+                st.warning(f"**Você tem certeza que deseja excluir o produto '{product_to_delete['name']}'?**")
+                st.info("💡 **Importante:** Se houver pedidos ativos com este produto, ele será apenas desativado. Caso contrário, será excluído permanentemente.")
+                
+                col1, col2, col3 = st.columns([1, 1, 1])
+                
+                with col1:
+                    if st.button("✅ Sim, Excluir", type="primary", use_container_width=True):
+                        if delete_product(delete_product_id):
+                            st.success("✅ Produto excluído com sucesso!")
+                            st.session_state.pop('delete_product_id', None)
+                            st.session_state.pop('show_delete_confirmation', None)
+                            st.rerun()
+                        else:
+                            st.error("❌ Erro ao excluir produto!")
+                
+                with col2:
+                    if st.button("❌ Cancelar", use_container_width=True):
+                        st.session_state.pop('delete_product_id', None)
+                        st.session_state.pop('show_delete_confirmation', None)
+                        st.rerun()
+                
+                st.markdown("---")
+            else:
+                st.error("❌ Produto não encontrado!")
+                st.session_state.pop('delete_product_id', None)
+                st.session_state.pop('show_delete_confirmation', None)
+                st.rerun()
+        
         # Lista de produtos com opções de edição
         st.markdown("#### 📦 Produtos Existentes")
         all_products = get_products_by_category()
@@ -1750,10 +1786,18 @@ def admin_dashboard():
                 with col2:
                     st.markdown("**⚙️ Ações:**")
                     
-                    # Botão para editar - mais visível
+                    # Botões de ação - mais visíveis
                     st.markdown("---")
+                    
+                    # Botão Editar
                     if st.button("🔧 Editar Produto", key=f"edit_{product['id']}", use_container_width=True, type="primary"):
                         st.session_state.edit_product_id = product['id']
+                        st.rerun()
+                    
+                    # Botão Excluir
+                    if st.button("🗑️ Excluir Produto", key=f"delete_{product['id']}", use_container_width=True, type="secondary"):
+                        st.session_state.delete_product_id = product['id']
+                        st.session_state.show_delete_confirmation = True
                         st.rerun()
                     
                     st.markdown("---")

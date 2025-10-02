@@ -360,6 +360,42 @@ def update_product_stock(product_id: int, quantity: int, decrease: bool = False)
         conn.close()
 
 
+def delete_product(product_id: int) -> bool:
+    """Exclui um produto (soft delete - marca como inativo)"""
+    conn = get_conn()
+    cur = conn.cursor()
+    
+    try:
+        # Verificar se o produto existe
+        cur.execute("SELECT id FROM products WHERE id = ?", (product_id,))
+        if not cur.fetchone():
+            return False
+        
+        # Verificar se há pedidos com este produto
+        cur.execute("""
+            SELECT COUNT(*) as count FROM order_items oi 
+            JOIN orders o ON oi.order_id = o.id 
+            WHERE oi.product_id = ? AND o.status IN ('pending', 'approved')
+        """, (product_id,))
+        
+        active_orders = cur.fetchone()['count']
+        
+        if active_orders > 0:
+            # Se há pedidos ativos, apenas marcar como inativo
+            cur.execute("UPDATE products SET is_active = 0 WHERE id = ?", (product_id,))
+        else:
+            # Se não há pedidos ativos, pode excluir completamente
+            cur.execute("DELETE FROM products WHERE id = ?", (product_id,))
+        
+        conn.commit()
+        return True
+    except Exception as e:
+        print(f"Erro ao excluir produto: {e}")
+        return False
+    finally:
+        conn.close()
+
+
 # Cart functions
 def add_to_cart(user_id: int, product_id: int, quantity: int = 1) -> bool:
     conn = get_conn()

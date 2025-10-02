@@ -1,8 +1,8 @@
 {
   "pix": {
     "enabled": true,
-    "chave_pix": "",
-    "nome_recebedor": "E-Store",
+    "chave_pix": "45389352807",
+    "nome_recebedor": "Lucas santiago",
     "cidade": "São Paulo",
     "descricao": "Pagamento E-commerce"
   },
