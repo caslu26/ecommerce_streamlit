@@ -258,13 +258,13 @@ def login_page():
         col1, col2, col3 = st.columns([1, 2, 1])
         
         with col2:
-            st.markdown("""
+        st.markdown("""
                 <div style='background: linear-gradient(145deg, #ffffff, #f8fafc); 
                             padding: 2rem; border-radius: 16px; margin: 1rem 0; 
                             box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);'>
-            """, unsafe_allow_html=True)
-            
-            with st.form("login_form", clear_on_submit=False):
+        """, unsafe_allow_html=True)
+        
+        with st.form("login_form", clear_on_submit=False):
                 st.markdown("### 🔐 Dados de Acesso")
                 
                 username = st.text_input(
@@ -289,27 +289,27 @@ def login_page():
             
             if login_btn:
                 if username and password:
-                    user = authenticate_user(username, password)
-                    if user:
-                        st.session_state.user_id = user['id']
-                        st.session_state.username = user['username']
-                        st.session_state.role = user['role']
-                        st.session_state.first_name = user['first_name']
-                        
-                        # Se vem do checkout, transferir carrinho de sessão
-                        if st.session_state.get('from_checkout', False):
-                            if 'session_cart' in st.session_state:
-                                for item in st.session_state.session_cart:
-                                    add_to_cart(user['id'], item['product_id'], item['quantity'])
-                                del st.session_state.session_cart
-                            st.session_state.page = "checkout"
-                            st.session_state.pop('from_checkout', None)
-                        else:
-                            st.session_state.page = "home"
-                        
-                        st.success(f"✅ Bem-vindo de volta, {user['first_name']}!")
-                        st.rerun()
+                user = authenticate_user(username, password)
+                if user:
+                    st.session_state.user_id = user['id']
+                    st.session_state.username = user['username']
+                    st.session_state.role = user['role']
+                    st.session_state.first_name = user['first_name']
+                    
+                    # Se vem do checkout, transferir carrinho de sessão
+                    if st.session_state.get('from_checkout', False):
+                        if 'session_cart' in st.session_state:
+                            for item in st.session_state.session_cart:
+                                add_to_cart(user['id'], item['product_id'], item['quantity'])
+                            del st.session_state.session_cart
+                        st.session_state.page = "checkout"
+                        st.session_state.pop('from_checkout', None)
                     else:
+                        st.session_state.page = "home"
+                    
+                        st.success(f"✅ Bem-vindo de volta, {user['first_name']}!")
+                    st.rerun()
+                else:
                         st.error("❌ Credenciais inválidas! Verifique seu usuário e senha.")
                 else:
                     st.error("❌ Preencha todos os campos!")
@@ -317,10 +317,10 @@ def login_page():
             st.markdown("</div>", unsafe_allow_html=True)
             
             # Botão "Esqueci minha senha" fora do formulário
-            st.markdown("""
+        st.markdown("""
                 <div style='text-align: center; margin: 1rem 0;'>
-            """, unsafe_allow_html=True)
-            
+        """, unsafe_allow_html=True)
+        
             if st.button("🔑 Esqueci minha senha", help="Funcionalidade em desenvolvimento"):
                 st.info("📧 Funcionalidade de recuperação de senha será implementada em breve!")
             
@@ -332,9 +332,9 @@ def login_page():
         
         with col2:
             st.markdown("""
-            <div style='background: linear-gradient(145deg, #ffffff, #f8fafc); 
-                        padding: 2rem; border-radius: 16px; margin: 1rem 0; 
-                        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);'>
+                <div style='background: linear-gradient(145deg, #ffffff, #f8fafc); 
+                            padding: 2rem; border-radius: 16px; margin: 1rem 0; 
+                            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);'>
             """, unsafe_allow_html=True)
     
     with st.form("register_form", clear_on_submit=False):
@@ -402,28 +402,28 @@ def login_page():
                 register_btn = st.form_submit_button("✅ Criar Minha Conta", use_container_width=True, type="primary")
         
         if register_btn:
-                    # Validações
-                    if not all([first_name, last_name, username, email, password]):
-                        st.error("❌ Preencha todos os campos obrigatórios!")
-                    elif not terms_accepted:
-                        st.error("❌ Você deve aceitar os termos de uso!")
-                    elif password != confirm_password:
-                        st.error("❌ As senhas não coincidem!")
-                    elif len(password) < 6:
-                        st.error("❌ A senha deve ter pelo menos 6 caracteres!")
-                    else:
+                # Validações
+                if not all([first_name, last_name, username, email, password]):
+                    st.error("❌ Preencha todos os campos obrigatórios!")
+                elif not terms_accepted:
+                    st.error("❌ Você deve aceitar os termos de uso!")
+                elif password != confirm_password:
+                    st.error("❌ As senhas não coincidem!")
+                elif len(password) < 6:
+                    st.error("❌ A senha deve ter pelo menos 6 caracteres!")
+                else:
                     # Check if username/email already exists
                     if get_user_by_username(username):
-                            st.error("❌ Nome de usuário já existe! Escolha outro.")
+                        st.error("❌ Nome de usuário já existe! Escolha outro.")
                     elif get_user_by_email(email):
-                            st.error("❌ E-mail já cadastrado! Use outro e-mail.")
+                        st.error("❌ E-mail já cadastrado! Use outro e-mail.")
                     else:
-                            try:
+                        try:
                         password_hash = hash_password(password)
                         user_id = create_user(username, email, password_hash, first_name, last_name, phone)
                         
-                                if user_id:
-                                    st.success("🎉 Conta criada com sucesso!")
+                            if user_id:
+                                st.success("🎉 Conta criada com sucesso!")
                         st.session_state.user_id = user_id
                         st.session_state.username = username
                         st.session_state.first_name = first_name
@@ -443,9 +443,9 @@ def login_page():
                         
                         st.rerun()
                 else:
-                                    st.error("❌ Erro ao criar conta. Tente novamente.")
-                            except Exception as e:
-                                st.error(f"❌ Erro ao criar conta: {str(e)}")
+                                st.error("❌ Erro ao criar conta. Tente novamente.")
+                        except Exception as e:
+                            st.error(f"❌ Erro ao criar conta: {str(e)}")
             
             st.markdown("</div>", unsafe_allow_html=True)
 
@@ -1024,16 +1024,10 @@ def checkout_page():
                 # Mostrar instruções para PIX ou Boleto
                 if payment_result.get('payment_method') == 'PIX':
                     st.info("📱 **PIX Gerado!** Escaneie o QR Code ou use a chave PIX para pagar.")
-                            elif payment_result.get('payment_method') == 'Boleto Bancário':
-                                st.info("🏦 **Boleto Gerado!** Use o código de barras para pagar em qualquer banco ou lotérica.")
-                        else:
-                            st.error("❌ Erro ao processar pedido!")
-                    else:
-                        # Mostrar instruções para PIX ou Boleto
-                        if payment_result.get('payment_method') == 'PIX':
-                            st.info("📱 **PIX Gerado!** Escaneie o QR Code ou use a chave PIX para pagar.")
-                        elif payment_result.get('payment_method') == 'Boleto Bancário':
+                elif payment_result.get('payment_method') == 'Boleto Bancário':
                     st.info("🏦 **Boleto Gerado!** Use o código de barras para pagar em qualquer banco ou lotérica.")
+                else:
+                    st.error("❌ Erro ao processar pedido!")
         else:
             st.warning("⚠️ Preencha o endereço de entrega para continuar com o pagamento.")
 
