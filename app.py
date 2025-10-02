@@ -6,6 +6,7 @@ import base64
 import uuid
 import os
 import json
+import time
 from datetime import datetime
 import bcrypt
 import pandas as pd
@@ -15,6 +16,40 @@ try:
     PLOTLY_AVAILABLE = True
 except ImportError:
     PLOTLY_AVAILABLE = False
+
+# Função para limpeza automática de cache
+def auto_clear_cache():
+    """Limpa automaticamente o cache do Streamlit em intervalos regulares"""
+    current_time = time.time()
+    
+    # Verificar se já passou tempo suficiente desde a última limpeza
+    if 'last_cache_clear' not in st.session_state:
+        st.session_state.last_cache_clear = current_time
+    
+    # Limpar cache a cada 5 minutos (300 segundos)
+    if current_time - st.session_state.last_cache_clear > 300:
+        st.cache_data.clear()
+        st.session_state.last_cache_clear = current_time
+        
+    # Limpar dados de pagamento antigos da sessão
+    if 'payment_result' in st.session_state:
+        # Se o resultado do pagamento tem mais de 10 minutos, limpar
+        if hasattr(st.session_state, 'payment_timestamp'):
+            if current_time - st.session_state.payment_timestamp > 600:  # 10 minutos
+                del st.session_state.payment_result
+                if 'payment_timestamp' in st.session_state:
+                    del st.session_state.payment_timestamp
+
+def get_status_display(status):
+    """Retorna o status formatado para exibição"""
+    status_map = {
+        'pending': '⏳ Aguardando Pagamento',
+        'approved': '✅ Pago',
+        'failed': '❌ Falhou',
+        'cancelled': '🚫 Cancelado',
+        'processing': '🔄 Processando'
+    }
+    return status_map.get(status, status)
 
 # Configuração da página
 st.set_page_config(
@@ -796,11 +831,70 @@ def checkout_page():
         
         # Informações de entrega
         st.markdown("### 📝 Informações de Entrega")
-        shipping_address = st.text_area(
-            "📍 Endereço de entrega", 
-            placeholder="Rua, Número, Bairro, Cidade - CEP",
-            help="Digite o endereço completo para entrega"
-        )
+        
+        with st.form("shipping_form"):
+            col_addr1, col_addr2 = st.columns([2, 1])
+            
+            with col_addr1:
+                street = st.text_input(
+                    "🏠 Rua/Avenida",
+                    placeholder="Ex: Rua das Flores"
+                )
+                neighborhood = st.text_input(
+                    "🏘️ Bairro",
+                    placeholder="Ex: Centro"
+                )
+            
+            with col_addr2:
+                number = st.text_input(
+                    "🔢 Número",
+                    placeholder="123"
+                )
+                complement = st.text_input(
+                    "🏢 Complemento",
+                    placeholder="Apto 45 (opcional)"
+                )
+            
+            col_city, col_state, col_cep = st.columns([2, 1, 1])
+            
+            with col_city:
+                city = st.text_input(
+                    "🏙️ Cidade",
+                    placeholder="Ex: São Paulo"
+                )
+            
+            with col_state:
+                state = st.selectbox(
+                    "🗺️ Estado",
+                    ["", "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", 
+                     "MA", "MT", "MS", "MG", "PA", "PB", "PR", "PE", "PI", 
+                     "RJ", "RN", "RS", "RO", "RR", "SC", "SP", "SE", "TO"]
+                )
+            
+            with col_cep:
+                cep = st.text_input(
+                    "📮 CEP",
+                    placeholder="12345-678"
+                )
+            
+            # Botão para confirmar endereço
+            address_confirmed = st.form_submit_button("✅ Confirmar Endereço", use_container_width=True)
+            
+            # Montar endereço completo
+            if address_confirmed and street and number and neighborhood and city and state and cep:
+                complement_text = f", {complement}" if complement else ""
+                shipping_address = f"{street}, {number}{complement_text} - {neighborhood} - {city} - {state} - CEP: {cep}"
+                st.session_state.shipping_address = shipping_address
+                st.success("✅ Endereço confirmado!")
+            elif address_confirmed:
+                st.error("❌ Por favor, preencha todos os campos obrigatórios!")
+                shipping_address = None
+            else:
+                shipping_address = st.session_state.get('shipping_address', None)
+        
+        # Mostrar endereço confirmado
+        if shipping_address:
+            st.info(f"📍 **Endereço confirmado:** {shipping_address}")
     
     with col2:
         # Sistema de pagamento
@@ -814,6 +908,10 @@ def checkout_page():
             
             # Renderizar formulário de pagamento
             payment_result = payment_ui.render_payment_form(order_data)
+            
+            # Adicionar timestamp ao resultado do pagamento
+            if payment_result and payment_result.get('status') in ['approved', 'pending']:
+                st.session_state.payment_timestamp = time.time()
             
             # Processar resultado do pagamento
             if payment_result.get('status') == 'approved':
@@ -944,14 +1042,15 @@ def orders_page():
         return
     
     for order in orders:
-        with st.expander(f"📋 Pedido {order['order_number']} - R$ {order['total_amount']:,.2f} - {order['status']}"):
+        status_display = get_status_display(order['status'])
+        with st.expander(f"📋 Pedido {order['order_number']} - R$ {order['total_amount']:,.2f} - {status_display}"):
             col1, col2 = st.columns([2, 1])
             
             with col1:
                 st.markdown(f"**📅 Data:** {datetime.fromtimestamp(order['created_at']).strftime('%d/%m/%Y %H:%M')}")
                 st.markdown(f"**📍 Endereço:** {order['shipping_address']}")
                 st.markdown(f"**💳 Pagamento:** {order['payment_method']}")
-                st.markdown(f"**📊 Status:** {order['status']}")
+                st.markdown(f"**📊 Status:** {status_display}")
                 
                 # Mostrar itens do pedido
                 order_details = get_order_details(order['id'])
@@ -1203,7 +1302,8 @@ def admin_dashboard():
                 if status_filter != "Todos" and order['status'] != status_filter:
                     continue
                 
-                with st.expander(f"📦 {order['order_number']} - {order['first_name']} {order['last_name']} - Status: {order['status'].title()}"):
+                status_display = get_status_display(order['status'])
+                with st.expander(f"📦 {order['order_number']} - {order['first_name']} {order['last_name']} - Status: {status_display}"):
                     col1, col2, col3 = st.columns([2, 1, 1])
                     
                     with col1:
@@ -1679,10 +1779,42 @@ def admin_dashboard():
         st.markdown("### 👥 Gestão de Usuários")
         # Aqui você implementaria a gestão de usuários
         st.info("👥 Funcionalidades de gestão de usuários serão implementadas aqui")
+        
+        st.markdown("---")
+        st.markdown("### ⚙️ Configurações do Sistema")
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            if st.button("🧹 Limpar Cache do Sistema", use_container_width=True):
+                st.cache_data.clear()
+                if 'payment_result' in st.session_state:
+                    del st.session_state.payment_result
+                if 'payment_timestamp' in st.session_state:
+                    del st.session_state.payment_timestamp
+                st.session_state.last_cache_clear = time.time()
+                st.success("✅ Cache limpo com sucesso!")
+                st.rerun()
+        
+        with col2:
+            if st.button("🔄 Recarregar Aplicação", use_container_width=True):
+                st.rerun()
+        
+        # Informações do sistema
+        st.markdown("#### 📊 Informações do Sistema")
+        last_clear = st.session_state.get('last_cache_clear', 0)
+        if last_clear > 0:
+            last_clear_time = datetime.fromtimestamp(last_clear).strftime('%d/%m/%Y %H:%M:%S')
+            st.info(f"🕒 Última limpeza de cache: {last_clear_time}")
+        else:
+            st.info("🕒 Cache ainda não foi limpo nesta sessão")
 
 
 def main():
     """Função principal da aplicação"""
+    
+    # Limpeza automática de cache
+    auto_clear_cache()
     
     # Inicializar banco
     init_db()
