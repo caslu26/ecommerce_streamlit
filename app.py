@@ -258,13 +258,13 @@ def login_page():
         col1, col2, col3 = st.columns([1, 2, 1])
         
         with col2:
-            st.markdown("""
+        st.markdown("""
             <div style='background: linear-gradient(145deg, #ffffff, #f8fafc); 
                         padding: 2rem; border-radius: 16px; margin: 1rem 0; 
                         box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);'>
-            """, unsafe_allow_html=True)
-            
-            with st.form("login_form", clear_on_submit=False):
+        """, unsafe_allow_html=True)
+        
+        with st.form("login_form", clear_on_submit=False):
                 st.markdown("### 🔐 Dados de Acesso")
                 
                 username = st.text_input(
@@ -286,41 +286,41 @@ def login_page():
                 st.markdown("---")
                 
                 login_btn = st.form_submit_button("🔓 Entrar na Conta", use_container_width=True, type="primary")
-                
-                if login_btn:
+            
+            if login_btn:
                     if username and password:
-                        user = authenticate_user(username, password)
-                        if user:
-                            st.session_state.user_id = user['id']
-                            st.session_state.username = user['username']
-                            st.session_state.role = user['role']
-                            st.session_state.first_name = user['first_name']
-                            
-                            # Se vem do checkout, transferir carrinho de sessão
-                            if st.session_state.get('from_checkout', False):
-                                if 'session_cart' in st.session_state:
-                                    for item in st.session_state.session_cart:
-                                        add_to_cart(user['id'], item['product_id'], item['quantity'])
-                                    del st.session_state.session_cart
-                                st.session_state.page = "checkout"
-                                st.session_state.pop('from_checkout', None)
-                            else:
-                                st.session_state.page = "home"
-                            
+                user = authenticate_user(username, password)
+                if user:
+                    st.session_state.user_id = user['id']
+                    st.session_state.username = user['username']
+                    st.session_state.role = user['role']
+                    st.session_state.first_name = user['first_name']
+                    
+                    # Se vem do checkout, transferir carrinho de sessão
+                    if st.session_state.get('from_checkout', False):
+                        if 'session_cart' in st.session_state:
+                            for item in st.session_state.session_cart:
+                                add_to_cart(user['id'], item['product_id'], item['quantity'])
+                            del st.session_state.session_cart
+                        st.session_state.page = "checkout"
+                        st.session_state.pop('from_checkout', None)
+                    else:
+                        st.session_state.page = "home"
+                    
                             st.success(f"✅ Bem-vindo de volta, {user['first_name']}!")
-                            st.rerun()
-                        else:
+                    st.rerun()
+                else:
                             st.error("❌ Credenciais inválidas! Verifique seu usuário e senha.")
                     else:
                         st.error("❌ Preencha todos os campos!")
-            
+    
             st.markdown("</div>", unsafe_allow_html=True)
             
             # Botão "Esqueci minha senha" fora do formulário
-            st.markdown("""
+        st.markdown("""
             <div style='text-align: center; margin: 1rem 0;'>
-            """, unsafe_allow_html=True)
-            
+        """, unsafe_allow_html=True)
+        
             if st.button("🔑 Esqueci minha senha", help="Funcionalidade em desenvolvimento"):
                 st.info("📧 Funcionalidade de recuperação de senha será implementada em breve!")
             
@@ -336,8 +336,8 @@ def login_page():
                         padding: 2rem; border-radius: 16px; margin: 1rem 0; 
                         box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);'>
             """, unsafe_allow_html=True)
-            
-            with st.form("register_form", clear_on_submit=False):
+    
+    with st.form("register_form", clear_on_submit=False):
                 st.markdown("### 👤 Informações Pessoais")
                 
                 col_a, col_b = st.columns(2)
@@ -400,8 +400,8 @@ def login_page():
                 )
                 
                 register_btn = st.form_submit_button("✅ Criar Minha Conta", use_container_width=True, type="primary")
-                
-                if register_btn:
+        
+        if register_btn:
                     # Validações
                     if not all([first_name, last_name, username, email, password]):
                         st.error("❌ Preencha todos os campos obrigatórios!")
@@ -412,37 +412,37 @@ def login_page():
                     elif len(password) < 6:
                         st.error("❌ A senha deve ter pelo menos 6 caracteres!")
                     else:
-                        # Check if username/email already exists
-                        if get_user_by_username(username):
+                    # Check if username/email already exists
+                    if get_user_by_username(username):
                             st.error("❌ Nome de usuário já existe! Escolha outro.")
-                        elif get_user_by_email(email):
+                    elif get_user_by_email(email):
                             st.error("❌ E-mail já cadastrado! Use outro e-mail.")
-                        else:
+                    else:
                             try:
-                                password_hash = hash_password(password)
-                                user_id = create_user(username, email, password_hash, first_name, last_name, phone)
-                                
+                        password_hash = hash_password(password)
+                        user_id = create_user(username, email, password_hash, first_name, last_name, phone)
+                        
                                 if user_id:
                                     st.success("🎉 Conta criada com sucesso!")
-                                    st.session_state.user_id = user_id
-                                    st.session_state.username = username
-                                    st.session_state.first_name = first_name
-                                    st.session_state.role = "customer"
-                                    
-                                    # Transfer session cart if exists
-                                    if 'session_cart' in st.session_state:
-                                        for item in st.session_state.session_cart:
-                                            add_to_cart(user_id, item['product_id'], item.get('quantity', 1))
-                                        del st.session_state.session_cart
-                                    
-                                    if st.session_state.get('from_checkout', False):
-                                        st.session_state.page = "checkout"
-                                        st.session_state.pop('from_checkout', None)
-                                    else:
-                                        st.session_state.page = "home"
-                                    
-                                    st.rerun()
-                                else:
+                        st.session_state.user_id = user_id
+                        st.session_state.username = username
+                        st.session_state.first_name = first_name
+                        st.session_state.role = "customer"
+                        
+                        # Transfer session cart if exists
+                        if 'session_cart' in st.session_state:
+                            for item in st.session_state.session_cart:
+                                add_to_cart(user_id, item['product_id'], item.get('quantity', 1))
+                            del st.session_state.session_cart
+                        
+                        if st.session_state.get('from_checkout', False):
+                            st.session_state.page = "checkout"
+                            st.session_state.pop('from_checkout', None)
+                        else:
+                            st.session_state.page = "home"
+                        
+                        st.rerun()
+                else:
                                     st.error("❌ Erro ao criar conta. Tente novamente.")
                             except Exception as e:
                                 st.error(f"❌ Erro ao criar conta: {str(e)}")
@@ -582,11 +582,14 @@ def home_page():
     cols = st.columns(grid_cols)
     for i, product in enumerate(products):
         with cols[i % grid_cols]:
-            # Improved product card
+            # Improved product card with real image
+            image_src = product['image_url'] if product['image_url'] else "https://via.placeholder.com/250x200/6b7280/white?text=Sem+Imagem"
+            
             product_card = f"""
             <div class="product-card" style="text-align: center;">
-                <img src="https://via.placeholder.com/250x200/667eea/white?text=Product" 
-                     width="100%" style="border-radius: 8px; margin-bottom: 1rem;">
+                <img src="{image_src}" 
+                     width="100%" style="border-radius: 8px; margin-bottom: 1rem; height: 200px; object-fit: cover;"
+                     onerror="this.src='https://via.placeholder.com/250x200/ef4444/white?text=Erro+Imagem';">
                 <h4 style="color: #1f2937; margin: 0 0 0.5rem 0; font-size: 1.1rem;">{product['name']}</h4>
                 <p style="color: #6b7280; font-size: 0.85rem; min-height: 2.5rem; line-height: 1.3;">
                     {product['description'][:60]}{'...' if len(product['description']) > 60 else ''}
@@ -647,9 +650,19 @@ def product_detail_page():
     col1, col2 = st.columns([1, 1])
     
     with col1:
-        # Imagem do produto (placeholder)
-        st.image("https://via.placeholder.com/400x300/3b82f6/white?text=Product+Image", 
+        # Imagem do produto
+        if product['image_url']:
+            try:
+                st.image(product['image_url'], caption=product['name'], use_column_width=True)
+            except:
+                # Fallback se a imagem não carregar
+                st.image("https://via.placeholder.com/400x300/3b82f6/white?text=Imagem+Indisponível", 
                 caption=product['name'], use_column_width=True)
+                st.warning("⚠️ Não foi possível carregar a imagem do produto")
+        else:
+            st.image("https://via.placeholder.com/400x300/6b7280/white?text=Sem+Imagem", 
+                    caption=product['name'], use_column_width=True)
+            st.info("📷 Produto sem imagem cadastrada")
     
     with col2:
         st.markdown(f"### 📝 Descrição")
@@ -1008,9 +1021,9 @@ def checkout_page():
                                 st.session_state.page = "orders"
                                 st.rerun()
                             
-                            # Mostrar instruções para PIX ou Boleto
-                            if payment_result.get('payment_method') == 'PIX':
-                                st.info("📱 **PIX Gerado!** Escaneie o QR Code ou use a chave PIX para pagar.")
+                # Mostrar instruções para PIX ou Boleto
+                if payment_result.get('payment_method') == 'PIX':
+                    st.info("📱 **PIX Gerado!** Escaneie o QR Code ou use a chave PIX para pagar.")
                             elif payment_result.get('payment_method') == 'Boleto Bancário':
                                 st.info("🏦 **Boleto Gerado!** Use o código de barras para pagar em qualquer banco ou lotérica.")
                         else:
@@ -1020,7 +1033,7 @@ def checkout_page():
                         if payment_result.get('payment_method') == 'PIX':
                             st.info("📱 **PIX Gerado!** Escaneie o QR Code ou use a chave PIX para pagar.")
                         elif payment_result.get('payment_method') == 'Boleto Bancário':
-                            st.info("🏦 **Boleto Gerado!** Use o código de barras para pagar em qualquer banco ou lotérica.")
+                    st.info("🏦 **Boleto Gerado!** Use o código de barras para pagar em qualquer banco ou lotérica.")
         else:
             st.warning("⚠️ Preencha o endereço de entrega para continuar com o pagamento.")
 
@@ -1310,8 +1323,23 @@ def admin_dashboard():
             submitted = st.form_submit_button("✅ Cadastrar Produto")
             if submitted:
                 if name and description and price and stock is not None:
-                    # Aqui vocẽ poderia adicionar a função para criar novo produto
-                    st.success("✅ Novo produto cadastrado com sucesso!")
+                    try:
+                        product_id = create_product(
+                            name=name,
+                            description=description,
+                            price=price,
+                            stock=stock,
+                            category_id=category_id,
+                            image_url=image_url if image_url else None
+                        )
+                        
+                        if product_id:
+                            st.success(f"✅ Produto '{name}' cadastrado com sucesso! ID: {product_id}")
+                            st.rerun()
+                        else:
+                            st.error("❌ Erro ao cadastrar produto!")
+                    except Exception as e:
+                        st.error(f"❌ Erro ao cadastrar produto: {str(e)}")
                 else:
                     st.error("❌ Preencha todos os campos obrigatórios!")
         
@@ -1808,7 +1836,7 @@ def admin_dashboard():
                     
                     if save_btn:
                         try:
-                            updates = {}
+                        updates = {}
                             
                             # Verificar mudanças nos campos
                             if edit_name and edit_name.strip() != product_to_edit['name']:
@@ -1816,32 +1844,32 @@ def admin_dashboard():
                             if edit_desc and edit_desc.strip() != product_to_edit['description']:
                                 updates['description'] = edit_desc.strip()
                             if edit_price is not None and float(edit_price) != float(product_to_edit['price']):
-                                updates['price'] = float(edit_price)
+                            updates['price'] = float(edit_price)
                             if edit_stock is not None and int(edit_stock) != int(product_to_edit['stock']):
-                                updates['stock'] = int(edit_stock)
-                            
+                            updates['stock'] = int(edit_stock)
+                        
                             # Processar imagem
-                            image_to_use = None
-                            if new_image:
-                                # Processar nova imagem carregada
-                                image_bytes = new_image.read()
-                                image_base64 = base64.b64encode(image_bytes).decode() 
-                                image_to_use = f"data:{new_image.type};base64,{image_base64}"
+                        image_to_use = None
+                        if new_image:
+                            # Processar nova imagem carregada
+                            image_bytes = new_image.read()
+                            image_base64 = base64.b64encode(image_bytes).decode() 
+                            image_to_use = f"data:{new_image.type};base64,{image_base64}"
                             elif new_image_url and new_image_url.strip():
-                                # Usar URL fornecida
-                                image_to_use = new_image_url.strip()
-                            
-                            if image_to_use is not None:
-                                updates['image_url'] = image_to_use
-                            
+                            # Usar URL fornecida
+                            image_to_use = new_image_url.strip()
+                        
+                        if image_to_use is not None:
+                            updates['image_url'] = image_to_use
+                        
                             # Executar atualização se houver mudanças
                             if updates:
                                 success = update_product(product_to_edit['id'], **updates)
-                                if success:
+                        if success:
                                     st.success("✅ Produto atualizado com sucesso!")
                                     st.session_state.pop('edit_product_id', None)
-                                    st.rerun()
-                                else:
+                            st.rerun()
+                        else:
                                     st.error("❌ Erro ao atualizar produto!")
                             else:
                                 st.info("ℹ️ Nenhuma alteração detectada.")
@@ -1863,7 +1891,7 @@ def admin_dashboard():
             else:
                 st.error("❌ Produto não encontrado!")
                 st.session_state.pop('edit_product_id', None)
-                st.rerun()
+                            st.rerun()
         
         # Modal de confirmação de exclusão
         if st.session_state.get('show_delete_confirmation', False):
