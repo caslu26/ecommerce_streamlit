@@ -456,6 +456,7 @@ def render_payment_config_page():
         # Mostrar configuração atual
         if pix_config.get("chave_pix"):
             st.markdown("### 📋 Configuração PIX Atual")
+            st.success(f"🔍 DEBUG: PIX configurado! Chave: {pix_config.get('chave_pix')}")
             
             col1, col2 = st.columns([3, 1])
             
@@ -784,6 +785,7 @@ def render_payment_config_page():
         # Mostrar configuração atual
         if cartao_config.get("merchant_id"):
             st.markdown("### 📋 Configuração Cartão Atual")
+            st.success(f"🔍 DEBUG: Cartão configurado! Merchant: {cartao_config.get('merchant_id')}")
             
             col1, col2 = st.columns([3, 1])
             
