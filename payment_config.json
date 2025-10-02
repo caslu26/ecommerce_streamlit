@@ -1,0 +1,42 @@
+{
+  "pix": {
+    "enabled": true,
+    "chave_pix": "",
+    "nome_recebedor": "E-Store",
+    "cidade": "São Paulo",
+    "descricao": "Pagamento E-commerce"
+  },
+  "boleto": {
+    "enabled": true,
+    "banco": "341",
+    "agencia": "1234",
+    "conta": "12345-6",
+    "cedente": "E-Store LTDA",
+    "cnpj": "12.345.678/0001-90",
+    "endereco": "Rua das Flores, 123 - São Paulo/SP",
+    "dias_vencimento": 3
+  },
+  "cartao": {
+    "enabled": true,
+    "gateway": "simulado",
+    "merchant_id": "MERCHANT123",
+    "api_key": "API_KEY_SIMULADA",
+    "webhook_url": "https://seudominio.com/webhook",
+    "taxa_porcentagem": 2.99,
+    "taxa_fixa": 0.5
+  },
+  "notificacoes": {
+    "email": {
+      "enabled": true,
+      "smtp_server": "smtp.gmail.com",
+      "smtp_port": 587,
+      "email": "contato@estore.com",
+      "senha": ""
+    },
+    "webhook": {
+      "enabled": false,
+      "url": "",
+      "secret": ""
+    }
+  }
+}

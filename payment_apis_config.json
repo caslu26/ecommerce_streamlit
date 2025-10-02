@@ -1,0 +1,27 @@
+{
+  "stripe": {
+    "enabled": false,
+    "environment": "sandbox",
+    "api_key": "sk_test_...",
+    "secret_key": "sk_test_...",
+    "webhook_secret": "whsec_...",
+    "success_url": "https://seudominio.com/success",
+    "cancel_url": "https://seudominio.com/cancel"
+  },
+  "pagseguro": {
+    "enabled": false,
+    "environment": "sandbox",
+    "api_key": "SEU_TOKEN_PAGSEGURO",
+    "notification_url": "https://seudominio.com/webhook/pagseguro"
+  },
+  "mercadopago": {
+    "enabled": false,
+    "environment": "sandbox",
+    "api_key": "TEST-...",
+    "access_token": "TEST-...",
+    "success_url": "https://seudominio.com/success",
+    "failure_url": "https://seudominio.com/failure",
+    "pending_url": "https://seudominio.com/pending"
+  }
+}
+
